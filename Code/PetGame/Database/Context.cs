@@ -7,6 +7,7 @@ namespace Database {
 
 		protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) {
 			optionsBuilder.UseSqlite($"Data Source={Settings.Get("DatabasePath")};");
+			optionsBuilder.UseLazyLoadingProxies();
 		}
 		
 		protected override void OnModelCreating(ModelBuilder modelBuilder) {

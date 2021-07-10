@@ -1,18 +1,18 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Database;
 using DSharpPlus.Entities;
+using Microsoft.EntityFrameworkCore;
 
 public static class DbUtils {
 	public static async Task<Player> GetOrCreatePlayer(Context dbContext, DiscordUser user) {
-		var player = await dbContext.Players.FindAsync((int)user.Id);
+		var player = await dbContext.Players.Where(p => p.DiscordUser == user.Id).FirstOrDefaultAsync();
 		if (player != null) return player;
 		player = new Player {
-			Id = (int)user.Id,
+			Id = Utils.Random.Next(),
 			DiscordUser = user.Id,
 			Joined = DateTime.Now,
-			Pets = new List<Pet>(),
 		};
 		dbContext.Players.Add(player);
 		await dbContext.SaveChangesAsync();

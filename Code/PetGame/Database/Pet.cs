@@ -1,5 +1,4 @@
 ﻿using System;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Database {
 	public class Pet {
@@ -8,7 +7,6 @@ namespace Database {
 		public DateTime Birthday { get; set; }
 		public string Color { get; set; }
 		public PetFamily Family { get; set; }
-		
-		public virtual Player Owner { get; set; }
+		public virtual Player Player { get; set; }
 	}
 }

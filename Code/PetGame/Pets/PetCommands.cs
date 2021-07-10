@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Database;
 using DSharpPlus;
+using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using DSharpPlus.SlashCommands;
 using Microsoft.EntityFrameworkCore;
@@ -45,7 +46,8 @@ public class PetCommandModule : SlashCommandModule {
 
 		
 		[SlashCommand("accept", "Names a new pet and adds is to your sanctuary.")]
-		public async Task NamePet(InteractionContext context, [Option("name", "The name of your new pet")] string name) {
+		public async Task NamePet(InteractionContext context, 
+				[Option("name", "The name of your new pet"), RemainingText] string name) {
 			if (!UnnamedPets.Remove(context.User.Id, out var petToken)) {
 				await context.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
 					Response.AsEphemeral(true)
@@ -64,9 +66,10 @@ public class PetCommandModule : SlashCommandModule {
 					Name = name,
 					Family = petToken.Family,
 					PetId = Utils.Random.Next(),
-					Owner = owner,
 				};
 				dbContext.Pets.Add(dbPet);
+				owner.Pets.Add(dbPet);
+				dbContext.Players.Update(owner);
 				await dbContext.SaveChangesAsync();
 			}
 		}
@@ -74,11 +77,13 @@ public class PetCommandModule : SlashCommandModule {
 		[SlashCommand("view", "Views all your pets")]
 		public async Task ShowAllPets(InteractionContext context, [Option("public", "Show the pets to everyone?")]bool @public = false) {
 			var owner = context.User;
-			List<Pet> pets;
+			ICollection<Pet> pets;
 			await using (var dbContext = new Context()) {
-				var player = await dbContext.Players.FindAsync((int)owner.Id);
+				var player = await dbContext.Players
+					.Include(p => p.Pets)
+					.Where(p => p.DiscordUser == owner.Id)
+					.FirstOrDefaultAsync();
 				pets = player?.Pets;
-				pets = await dbContext.Pets.ToListAsync();
 			}
 			if (pets == null || pets.Count == 0) {
 				await context.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
